@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>eFootball Card Simulator</title>
+  <style>
+    /* Schriftart einbinden */
+    @font-face {
+      font-family: 'eFootballStencil';
+      src: url('fonts/eFootballStencil-Regular.woff2') format('woff2'),
+           url('fonts/eFootballStencil-Regular.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    /* Allgemeine Styles */
+    body {
+      font-family: 'eFootballStencil', sans-serif;  /* Die benutzerdefinierte Schrift wird angewendet */
+      padding: 20px;
+      background-color: #000;
+      color: #fcff0b;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    .pack-container {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+
+    .pack {
+      width: 240px;
+      height: 340px;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #444;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .pack:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <h1>Choose A Pack</h1>
+  <div class="pack-container">
+<!-- Zweites Pack -->
+<div class="pack" style="background-image: url('content/POTW Club International Cup 10 Jul 25/pack/001.webp')" onclick="window.location.href='content/POTW Club International Cup 10 Jul 25/pack.html'"></div>
+  <!-- Erstes Pack -->
+  <div class="pack" style="background-image: url('content/Big Time 30th Anniversary/pack/001.webp')" onclick="window.location.href='content/Big Time 30th Anniversary/pack.html'"></div>
+</div>
+</body>
+</html>

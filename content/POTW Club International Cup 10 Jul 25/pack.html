@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>POTW: Club International Cup 10 Jul '25</title>
+  <style>
+    /* Schriftarten einbinden */
+    @font-face {
+      font-family: 'eFootballStencil';
+      src: url('fonts/eFootballStencil-Regular.woff2') format('woff2'),
+           url('fonts/eFootballStencil-Regular.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'eFootballSans';
+      src: url('fonts/eFootballSans-Regular.woff2') format('woff2'),
+           url('fonts/eFootballSans-Regular.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    /* Allgemeine Styles */
+    body {
+      font-family: 'eFootballSans', sans-serif;  /* Standard-Schriftart für Text */
+      padding: 20px;
+      text-align: center;
+      background-color: #000;
+      color: white;
+    }
+
+    /* Titel mit eFootballStencil-Schrift */
+    h1, h2 {
+      font-family: 'eFootballStencil', sans-serif;  /* Schrift für Titel */
+      color: #fcff0b;
+    }
+
+    #kartenZahl {
+      font-size: 18px;
+      margin: 10px auto 5px;
+      max-width: 1300px;
+      text-align: left;
+    }
+
+    #kartenContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      max-width: 1300px;
+      margin: 10px auto 20px;
+    }
+
+    .karte {
+      width: 80px;
+      height: 113px;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid #ccc;
+      filter: none;
+      transition: filter 0.3s;
+    }
+
+    .gezogen {
+      filter: grayscale(100%) brightness(60%);
+    }
+
+    #ziehenBtn, #drawAllBtn {
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      background-color: white; /* Weißer Hintergrund */
+      color: #63b2ff; /* Blaue Schriftfarbe */
+      font-weight: bold; /* Fettgedruckte Schrift */
+      border: none;
+      border-radius: 5px; /* Ecken abrunden */
+      transition: background-color 0.3s ease, color 0.3s ease;
+      margin-right: 10px; /* Abstand zwischen den Buttons */
+    }
+
+    #ziehenBtn:hover, #drawAllBtn:hover {
+      background-color: #63b2ff; /* Blaue Hintergrundfarbe bei Hover */
+      color: white; /* Weiße Schriftfarbe bei Hover */
+    }
+
+    #info {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    #anzeige {
+      margin-top: 20px;
+      min-height: 360px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    #anzeige .große-karte {
+      width: 240px;
+      height: 340px;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #333;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.6s ease;
+    }
+
+    #anzeige .große-karte.zeigen {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    #verlauf {
+      margin: 20px 0 10px;
+    }
+
+    #verlaufContainer {
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 10px;
+      justify-content: flex-start;
+      scroll-behavior: smooth;
+    }
+
+    #verlaufContainer::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    #verlaufContainer::-webkit-scrollbar-thumb {
+      background-color: #aaa;
+      border-radius: 4px;
+    }
+
+    .mini-karte {
+      flex: 0 0 auto;
+      width: 60px;
+      height: 85px;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <h1> POTW: Club International Cup 10 Jul '25 </h1>
+  <div id="info">Remaining: <span id="versuche">3</span></div>
+  <button id="ziehenBtn">Draw</button>
+  <button id="drawAllBtn">Draw All</button>
+
+  <div id="verlauf">
+    <h2>Your Cards</h2>
+    <div id="verlaufContainer"></div>
+  </div>
+
+  <!-- Große Karte -->
+  <div id="anzeige"></div>
+
+  <div id="verlauf">
+    <h2>Available Players</h2>
+    <div id="verlaufContainer"></div>
+  </div>
+
+  <div id="kartenZahl">300/300</div>
+  <div id="kartenContainer"></div>
+
+  <script>
+    const MAX_ZIEHUNGEN = 3;
+    const KARTEN_ANZAHL = 11;
+
+    let verbleibendeZiehungen = MAX_ZIEHUNGEN;
+    const gezogeneKarten = new Set();
+
+    const kartenContainer = document.getElementById('kartenContainer');
+    const versucheAnzeige = document.getElementById('versuche');
+    const ziehenBtn = document.getElementById('ziehenBtn');
+    const drawAllBtn = document.getElementById('drawAllBtn');
+    const anzeige = document.getElementById('anzeige');
+    const verlaufContainer = document.getElementById('verlaufContainer');
+    const kartenZahlAnzeige = document.getElementById('kartenZahl');
+
+    const karten = [];
+
+    // Funktion zum Überprüfen, ob das Bild existiert
+    function imageExists(url, callback) {
+      const img = new Image();
+      img.onload = function () {
+        callback(true);
+      };
+      img.onerror = function () {
+        callback(false);
+      };
+      img.src = url;
+    }
+
+    // Funktion, um das Bild zu setzen (mit Fallback)
+    function setCardImage(karte, nummer) {
+      const bildUrl = `cards/${nummer}.webp`;
+
+      imageExists(bildUrl, (exists) => {
+        if (exists) {
+          karte.style.backgroundImage = `url('${bildUrl}')`;
+        } else {
+          karte.style.backgroundImage = `url('cards/none.webp')`; // Fallback auf none.webp
+        }
+      });
+    }
+
+    // Karten generieren
+    for (let i = 1; i <= KARTEN_ANZAHL; i++) {
+      const karte = document.createElement('div');
+      karte.classList.add('karte');
+      const nummer = String(i).padStart(3, '0');
+      
+      // Bild setzen mit Fallback
+      setCardImage(karte, nummer);
+      
+      karte.dataset.index = i;
+      kartenContainer.appendChild(karte);
+      karten.push(karte);
+    }
+
+    function updateKartenZahl() {
+      const verbleibend = KARTEN_ANZAHL - gezogeneKarten.size;
+      kartenZahlAnzeige.textContent = `Limited Draw: ${verbleibend}/${KARTEN_ANZAHL}`;
+    }
+
+    updateKartenZahl(); // Initial
+
+    // Funktion zum Ziehen einer Karte
+    function zieheKarte() {
+      if (verbleibendeZiehungen <= 0 || gezogeneKarten.size >= KARTEN_ANZAHL) return;
+
+      let ziehung;
+      do {
+        ziehung = Math.floor(Math.random() * KARTEN_ANZAHL);
+      } while (gezogeneKarten.has(ziehung));
+
+      gezogeneKarten.add(ziehung);
+
+      const gezogeneKarte = karten[ziehung];
+      gezogeneKarte.classList.add('gezogen');
+
+      const nummer = String(ziehung + 1).padStart(3, '0');
+
+      // Große Karte anzeigen
+      const großeKarte = document.createElement('div');
+      großeKarte.classList.add('große-karte', 'zeigen');
+      
+      // Bild setzen mit Fallback
+      setCardImage(großeKarte, nummer);
+
+      anzeige.innerHTML = '';  // Leeren Inhalt
+      anzeige.appendChild(großeKarte);
+
+      // Karte zum Verlauf hinzufügen
+      const mini = document.createElement('div');
+      mini.classList.add('mini-karte');
+      
+      // Bild setzen mit Fallback
+      setCardImage(mini, nummer);
+      
+      verlaufContainer.appendChild(mini);
+      verlaufContainer.scrollLeft = verlaufContainer.scrollWidth;
+
+      verbleibendeZiehungen--;
+      versucheAnzeige.textContent = verbleibendeZiehungen;
+
+      updateKartenZahl(); // Zählung aktualisieren
+
+      if (verbleibendeZiehungen === 0) {
+        ziehenBtn.disabled = true;
+      } else {
+        ziehenBtn.disabled = false;
+      }
+    }
+
+    ziehenBtn.addEventListener('click', zieheKarte);
+
+    drawAllBtn.addEventListener('click', () => {
+      if (verbleibendeZiehungen <= 0 || gezogeneKarten.size >= KARTEN_ANZAHL) return;
+
+      // Alle verbleibenden Ziehungen sofort durchführen
+      while (verbleibendeZiehungen > 0) {
+        zieheKarte();
+      }
+    });
+  </script>
+</body>
+</html>
